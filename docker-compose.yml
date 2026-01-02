@@ -16,13 +16,17 @@ services:
       - .:/app
 
   db:
-    image: postgres:15
+    image: postgres:16
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=flaskdb
+      - TZ=Asia/Kolkata
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./sql_files:/docker-entrypoint-initdb.d:ro
 
 volumes:
   postgres_data:
