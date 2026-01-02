@@ -7,7 +7,7 @@ app = Flask(__name__)
 def get_db_connection():
     conn = psycopg2.connect(
         host=os.environ.get('POSTGRES_HOST', 'db'),
-        database=os.environ.get('POSTGRES_DB', 'flaskdb'),
+        database=os.environ.get('POSTGRES_DB', 'chinook_auto_increment'),
         user=os.environ.get('POSTGRES_USER', 'user'),
         password=os.environ.get('POSTGRES_PASSWORD', 'password')
     )
@@ -79,6 +79,25 @@ def get_album_id(album_id):
         return f"<p>Albums: {albums}</p>"
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
+'''
+view all albums
+@app.route("/albums", methods=['GET'])
+view album by id
+@app.route("/albums/<int:album_id>", methods=['GET'])
+view all artists
+@app.route("/artists", methods=['GET'])
+view artist by id
+@app.route("/artists/<int:artist_id>", methods=['GET'])
+view all tracks
+@app.route("/tracks", methods=['GET']) 
+view track by id
+@app.route("/tracks/<int:track_id>", methods=['GET'])
+view all customers
+@app.route("/customers", methods=['GET'])
+view customer by id
+@app.route("/customers/<int:customer_id>", methods=['GET'])
+'''
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
