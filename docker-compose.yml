@@ -8,7 +8,7 @@ services:
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=flaskdb
+      - POSTGRES_DB=chinook_auto_increment
       - POSTGRES_HOST=db
     depends_on:
       - db
