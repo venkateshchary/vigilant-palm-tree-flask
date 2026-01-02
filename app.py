@@ -54,6 +54,31 @@ def get_employee(emp_id):
         return f"<p>Error connecting to database: {e}</p>"
 
 
+@app.route("/album", methods=['GET'])
+def get_album():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM album')
+        albums = cur.fetchall()
+        cur.close()
+        conn.close()
+        return f"<p>Albums: {albums}</p>"
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/album/<string:album_id>", methods=['GET'])
+def get_album_id(album_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM album WHERE Album_ID = %s', (album_id,))
+        albums = cur.fetchall()
+        cur.close()
+        conn.close()
+        return f"<p>Albums: {albums}</p>"
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
 '''
 view all albums
 @app.route("/albums", methods=['GET'])
@@ -71,9 +96,8 @@ view all customers
 @app.route("/customers", methods=['GET'])
 view customer by id
 @app.route("/customers/<int:customer_id>", methods=['GET'])
-
-
 '''
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
