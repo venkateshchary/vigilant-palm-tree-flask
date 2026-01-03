@@ -27,6 +27,9 @@ def hello_world():
         db_version = cur.fetchone()
         cur.close()
         conn.close()
+        if db_version is None:
+            return "<p>Error: no result from SELECT version()</p>"
+
 
     
         if db_version is None:
@@ -204,6 +207,32 @@ def update_genre(genre_id):
         cur.close()
         conn.close()
         return jsonify(genres)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/invoice", methods=['GET'])
+def get_invoice():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM invoice')
+        invoices = cur.fetchall()
+        cur.close()
+        conn.close()
+        return f"<p>Invoices: {invoices}</p>"
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/invoice/<string:invoice_id>", methods=['GET'])
+def get_invoice_id(invoice_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute('SELECT * FROM invoice WHERE Invoice_ID = %s', (invoice_id,))
+        invoices = cur.fetchall()
+        cur.close()
+        conn.close()
+        return f"<p>Invoices: {invoices}</p>"
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
     
