@@ -1,7 +1,10 @@
 import os
 import psycopg2
 import psycopg2.extras
+ genre-apl
 
+
+ main
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -24,6 +27,10 @@ def hello_world():
         db_version = cur.fetchone()
         cur.close()
         conn.close()
+
+    
+        if db_version is None:
+            return "<p>Error: no result from SELECT version()</p>"
         return f"<p>Hello, World! Connected to: {db_version[0]}</p>"
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
@@ -149,6 +156,54 @@ def update_artist(artist_id):
         cur.close()
         conn.close()
         return jsonify(artists)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+    
+@app.route("/genre", methods=['GET'])
+def get_genre():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from genre'
+        cur.execute(query)
+        genres = cur.fetchall()  # list of dicts
+        cur.close()
+        conn.close()
+        return jsonify(genres)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/genre/<int:genre_id>", methods=['GET'])
+def get_genre_id(genre_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM genre WHERE Genre_ID = %s', (genre_id,))
+        genres = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(genres)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/genre/<int:genre_id>", methods=['PUT'])
+def update_genre(genre_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        if not data:
+            # Return a 400 Bad Request error if data is missing
+            return jsonify({"error": "Missing request body"}), 400
+        else:
+            cur.execute('UPDATE genre SET name=%s WHERE Genre_ID = %s',
+                        (data['name'], genre_id))
+            conn.commit()
+            cur.execute('SELECT * FROM genre WHERE Genre_ID = %s', (genre_id,))
+            genres = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(genres)
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
     
