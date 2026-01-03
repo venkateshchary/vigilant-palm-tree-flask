@@ -1,6 +1,10 @@
 import os
 import psycopg2
 import psycopg2.extras
+ genre-apl
+
+
+ main
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -63,25 +67,95 @@ def get_employee(emp_id):
 def get_album():
     try:
         conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('SELECT * FROM album')
-        albums = cur.fetchall()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from album'
+        cur.execute(query)
+        albums = cur.fetchall()  # list of dicts
         cur.close()
         conn.close()
-        return f"<p>Albums: {albums}</p>"
+        return jsonify(albums)
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
-
-@app.route("/album/<string:album_id>", methods=['GET'])
+ 
+@app.route("/album/<int:album_id>", methods=['GET'])
 def get_album_id(album_id):
     try:
         conn = get_db_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute('SELECT * FROM album WHERE Album_ID = %s', (album_id,))
         albums = cur.fetchall()
         cur.close()
         conn.close()
-        return f"<p>Albums: {albums}</p>"
+        return jsonify(albums)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/album/<int:album_id>", methods=['PUT'])
+def update_albums(album_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        if not data or 'album_id' not in data:
+            # Return a 400 Bad Request error if data is missing
+            return jsonify({"error": "Missing 'album_id' in request body"}), 400
+        else:
+            cur.execute('UPDATE album SET title=%s WHERE Album_ID = %s',
+                        (data['title'], album_id))
+            conn.commit()
+            cur.execute('SELECT * FROM album WHERE Album_ID = %s', (data['album_id'],))
+            albums = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(albums)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+    
+@app.route("/artist", methods=['GET'])
+def get_artist():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from artist'
+        cur.execute(query)
+        artists = cur.fetchall()  # list of dicts
+        cur.close()
+        conn.close()
+        return jsonify(artists)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/artist/<int:artist_id>", methods=['GET'])
+def get_artist_id(artist_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM artist WHERE Artist_ID = %s', (artist_id,))
+        artists = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(artists)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/artist/<int:artist_id>", methods=['PUT'])
+def update_artist(artist_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        if not data:
+            # Return a 400 Bad Request error if data is missing
+            return jsonify({"error": "Missing request body"}), 400
+        else:
+            cur.execute('UPDATE artist SET name=%s WHERE Artist_ID = %s',
+                        (data['name'], artist_id))
+            conn.commit()
+            cur.execute('SELECT * FROM artist WHERE Artist_ID = %s', (artist_id,))
+            artists = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(artists)
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
     
