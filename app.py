@@ -1,10 +1,7 @@
 import os
 import psycopg2
 import psycopg2.extras
- genre-apl
 
-
- main
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
@@ -235,6 +232,56 @@ def get_invoice_id(invoice_id):
         return f"<p>Invoices: {invoices}</p>"
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
+    
+  
+@app.route("/customer", methods=['GET'])
+def get_customer():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from customer'
+        cur.execute(query)
+        customers = cur.fetchall()  # list of dicts
+        cur.close()
+        conn.close()
+        return jsonify(customers)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/customer/<int:customer_id>", methods=['GET'])
+def get_customer_id(customer_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM customer WHERE Customer_ID = %s', (customer_id,))
+        customers = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(customers)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/customer/<int:customer_id>", methods=['PUT'])
+def update_customer(customer_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        if not data:
+            # Return a 400 Bad Request error if data is missing
+            return jsonify({"error": "Missing request body"}), 400
+        else:
+            cur.execute('UPDATE customer SET first_name=%s WHERE Customer_ID = %s',
+                        (data['first_name'], customer_id))
+            conn.commit()
+            cur.execute('SELECT * FROM customer WHERE Customer_ID = %s', (customer_id,))
+            customers = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(customers)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
     
 '''
 view all albums
