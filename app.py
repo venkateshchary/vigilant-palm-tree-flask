@@ -282,7 +282,55 @@ def update_customer(customer_id):
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
 
-    
+      
+@app.route("/playlist", methods=['GET'])
+def get_playlist():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from playlist'
+        cur.execute(query)
+        playlists = cur.fetchall()  # list of dicts
+        cur.close()
+        conn.close()
+        return jsonify(playlists)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/playlist/<int:playlist_id>", methods=['GET'])
+def get_playlist_id(playlist_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM playlist WHERE Playlist_ID = %s', (playlist_id,))
+        playlists = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(playlists)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/playlist/<int:playlist_id>", methods=['PUT'])
+def update_playlist(playlist_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        if not data:
+            # Return a 400 Bad Request error if data is missing
+            return jsonify({"error": "Missing request body"}), 400
+        else:
+            cur.execute('UPDATE playlist SET name=%s WHERE Playlist_ID = %s',
+                        (data['name'], playlist_id))
+            conn.commit()
+            cur.execute('SELECT * FROM playlist WHERE Playlist_ID = %s', (playlist_id,))
+            playlists = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(playlists)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
 '''
 view all albums
 @app.route("/albums", methods=['GET'])
