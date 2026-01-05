@@ -380,6 +380,36 @@ def update_track(track_id):
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
 
+      
+@app.route("/playlist_track", methods=['GET'])
+def get_playlist_track():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from track'
+        cur.execute(query)
+        tracks = cur.fetchall()  # list of dicts
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/playlist_track/<int:track_id>", methods=['GET'])
+def get_playlist_track_id(playlist_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM playlist_track WHERE playlist_id = %s', (playlist_id,))
+        tracks = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+
+
 '''
 view all albums
 @app.route("/albums", methods=['GET'])
