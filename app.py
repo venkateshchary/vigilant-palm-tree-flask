@@ -456,6 +456,54 @@ def update_media_type(media_type_id):
         return jsonify(tracks)
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
+      
+@app.route("/invoiceline", methods=['GET'])
+def get_invoiceline():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from invoice_line'
+        cur.execute(query)
+        tracks = cur.fetchall()  # list of dicts
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/invoiceline/<int:invoice_line_id>", methods=['GET'])
+def get_invoice_line_id(invoice_line_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM invoice_line WHERE Invoice_Line_ID = %s', (invoice_line_id,))
+        tracks = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/invoiceline/<int:invoice_line_id>", methods=['PUT'])
+def update_invoice_line(invoice_line_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        if not data:
+            # Return a 400 Bad Request error if data is missing
+            return jsonify({"error": "Missing request body"}), 400
+        else:
+            cur.execute('UPDATE invoice_line SET quantity=%s, unit_price=%s WHERE Invoice_Line_ID = %s',
+                        (data['quantity'], data['unit_price'], invoice_line_id))
+            conn.commit()
+            cur.execute('SELECT * FROM invoice_line WHERE Invoice_Line_ID = %s', (invoice_line_id,))
+            tracks = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
 
 
 '''
