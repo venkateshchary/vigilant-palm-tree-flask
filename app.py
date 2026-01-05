@@ -408,6 +408,54 @@ def get_playlist_track_id(playlist_id):
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
 
+      
+@app.route("/mediatype", methods=['GET'])
+def get_mediatype():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        query = 'select * from media_type'
+        cur.execute(query)
+        tracks = cur.fetchall()  # list of dicts
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/mediatype/<int:media_type_id>", methods=['GET'])
+def get_media_type_id(media_type_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM media_type WHERE Media_Type_ID = %s', (media_type_id,))
+        tracks = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
+
+@app.route("/mediatype/<int:media_type_id>", methods=['PUT'])
+def update_media_type(media_type_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        data = request.get_json()
+        if not data:
+            # Return a 400 Bad Request error if data is missing
+            return jsonify({"error": "Missing request body"}), 400
+        else:
+            cur.execute('UPDATE media_type SET name=%s WHERE Media_Type_ID = %s',
+                        (data['name'], media_type_id))
+            conn.commit()
+            cur.execute('SELECT * FROM media_type WHERE Media_Type_ID = %s', (media_type_id,))
+            tracks = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify(tracks)
+    except Exception as e:
+        return f"<p>Error connecting to database: {e}</p>"
 
 
 '''
