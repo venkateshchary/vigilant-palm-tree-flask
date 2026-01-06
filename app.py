@@ -520,6 +520,55 @@ def health():
         return jsonify(status="unhealthy"), 500
 
 
+def parse_paging_args():
+    try:
+        page = max(int(request.args.get("page", 1)), 1)
+    except ValueError:
+        page = 1
+    try:
+        per_page = min(max(int(request.args.get("per_page", 10)), 1), 100)
+    except ValueError:
+        per_page = 10
+    return page, per_page
+
+@app.route("/albums", methods=["GET"])
+def list_albums():
+    page, per_page = parse_paging_args()
+    offset = (page - 1) * per_page
+    sort = request.args.get("sort", "album_id")
+    q = request.args.get("q")
+
+    base_sql = "SELECT * FROM album"
+    params = []
+    if q:
+        base_sql += " WHERE title ILIKE %s"
+        params.append(f"%{q}%")
+
+    count_sql = "SELECT COUNT(*) FROM (" + base_sql + ") AS t"
+    data_sql = base_sql + f" ORDER BY {sort} LIMIT %s OFFSET %s"
+    params_for_data = params + [per_page, offset]
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(count_sql, params)
+        total = cur.fetchone()["count"] # type: ignore
+        cur.execute(data_sql, params_for_data)
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return jsonify({
+            "data": rows,
+            "meta": {
+                "total": int(total),
+                "page": page,
+                "per_page": per_page,
+                "pages": (int(total) + per_page - 1) // per_page
+            }
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 '''
 view all albums
 @app.route("/albums", methods=['GET'])
