@@ -505,6 +505,20 @@ def update_invoice_line(invoice_line_id):
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
 
+@app.route("/health", methods=['GET'])
+def health():
+    # quick DB ping
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.fetchone()
+        cur.close()
+        conn.close()
+        return jsonify(status="ok"), 200
+    except Exception:
+        return jsonify(status="unhealthy"), 500
+
 
 '''
 view all albums
