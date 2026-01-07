@@ -3,8 +3,17 @@ import psycopg2
 import psycopg2.extras
 
 from flask import Flask, jsonify, request
+from flask_jwt_extended import ( # type: ignore
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
+import datetime
 
 app = Flask(__name__)
+
+# configure JWT
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "change-me-in-prod")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = datetime.timedelta(hours=2)
+jwt = JWTManager(app)
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -505,6 +514,38 @@ def update_invoice_line(invoice_line_id):
     except Exception as e:
         return f"<p>Error connecting to database: {e}</p>"
 
+
+@app.route("/login", methods=["POST"])
+def login():
+    body = request.get_json() or {}
+    username = body.get("username")
+    password = body.get("password")
+    if not username or not password:
+        return jsonify({"msg": "username and password required"}), 400
+
+    # simple example: validate against a users table (passwords should be hashed in real apps)
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, password FROM users WHERE username=%s", (username,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if not row or row[1] != password:
+            return jsonify({"msg": "Bad username or password"}), 401
+        user_id = row[0]
+        access_token = create_access_token(identity=user_id)
+        return jsonify(access_token=access_token)
+    except Exception as e:
+        return jsonify({"msg": str(e)}), 500
+
+# protect an endpoint example
+@app.route("/albums/protected", methods=["GET"])
+@jwt_required()
+def albums_protected():
+    current_user = get_jwt_identity()
+    # use current_user for audit/logging/ownership checks
+    return list_albums() # type: ignore
 
 '''
 view all albums
